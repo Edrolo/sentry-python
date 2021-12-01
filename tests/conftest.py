@@ -146,8 +146,8 @@ def monkeypatch_test_transport(monkeypatch, validate_event_schema):
             # Assert error events are sent without envelope to server, for compat.
             # This does not apply if any item in the envelope is an attachment.
             if not any(x.type == "attachment" for x in envelope.items):
-                assert not any(item.data_category == "error" for item in envelope.items)
-                assert not any(item.get_event() is not None for item in envelope.items)
+                assert all(item.data_category != "error" for item in envelope.items)
+                assert all(item.get_event() is None for item in envelope.items)
 
     def inner(client):
         monkeypatch.setattr(
@@ -504,9 +504,8 @@ def object_described_by_matcher():
             self.attrs = attrs
 
         def __eq__(self, test_obj):
-            if self.type:
-                if not isinstance(test_obj, self.type):
-                    return False
+            if self.type and not isinstance(test_obj, self.type):
+                return False
 
             if self.attrs:
                 for attr_name, attr_value in self.attrs.items():

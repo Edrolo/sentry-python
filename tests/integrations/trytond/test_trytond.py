@@ -97,10 +97,9 @@ def test_rpc_error_page(sentry_init, app, capture_events, get_client):
     def _(app, request, e):
         if isinstance(e, TrytondBaseException):
             return
-        else:
-            event_id = last_event_id()
-            data = TrytondUserError(str(event_id), str(e))
-            return app.make_response(request, data)
+        event_id = last_event_id()
+        data = TrytondUserError(str(event_id), str(e))
+        return app.make_response(request, data)
 
     client = get_client()
 

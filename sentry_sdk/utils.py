@@ -172,7 +172,7 @@ class Dsn(object):
         self.host = parts.hostname
 
         if parts.port is None:
-            self.port = self.scheme == "https" and 443 or 80
+            self.port = 443 if self.scheme == "https" else 80
         else:
             self.port = parts.port
 
@@ -539,22 +539,14 @@ def single_exception_from_error_tuple(
     mechanism=None,  # type: Optional[Dict[str, Any]]
 ):
     # type: (...) -> Dict[str, Any]
-    if exc_value is not None:
-        errno = get_errno(exc_value)
-    else:
-        errno = None
-
+    errno = get_errno(exc_value) if exc_value is not None else None
     if errno is not None:
         mechanism = mechanism or {"type": "generic"}
         mechanism.setdefault("meta", {}).setdefault("errno", {}).setdefault(
             "number", errno
         )
 
-    if client_options is None:
-        with_locals = True
-    else:
-        with_locals = client_options["with_locals"]
-
+    with_locals = True if client_options is None else client_options["with_locals"]
     frames = [
         serialize_frame(tb.tb_frame, tb_lineno=tb.tb_lineno, with_locals=with_locals)
         for tb in iter_stacks(tb)
@@ -622,14 +614,9 @@ def exceptions_from_error_tuple(
 ):
     # type: (...) -> List[Dict[str, Any]]
     exc_type, exc_value, tb = exc_info
-    rv = []
-    for exc_type, exc_value, tb in walk_exception_chain(exc_info):
-        rv.append(
-            single_exception_from_error_tuple(
+    rv = [single_exception_from_error_tuple(
                 exc_type, exc_value, tb, client_options, mechanism
-            )
-        )
-
+            ) for exc_type, exc_value, tb in walk_exception_chain(exc_info)]
     rv.reverse()
 
     return rv
@@ -660,8 +647,7 @@ def iter_event_stacktraces(event):
 def iter_event_frames(event):
     # type: (Dict[str, Any]) -> Iterator[Dict[str, Any]]
     for stacktrace in iter_event_stacktraces(event):
-        for frame in stacktrace.get("frames") or ():
-            yield frame
+        yield from stacktrace.get("frames") or ()
 
 
 def handle_in_app(event, in_app_exclude=None, in_app_include=None):
@@ -753,10 +739,7 @@ def _module_in_set(name, set):
     # type: (str, Optional[List[str]]) -> bool
     if not set:
         return False
-    for item in set or ():
-        if item == name or name.startswith(item + "."):
-            return True
-    return False
+    return any(item == name or name.startswith(item + ".") for item in set or ())
 
 
 def strip_string(value, max_length=None):
@@ -792,7 +775,7 @@ def _is_contextvars_broken():
         from gevent.monkey import is_object_patched  # type: ignore
 
         # Get the MAJOR and MINOR version numbers of Gevent
-        version_tuple = tuple([int(part) for part in gevent.__version__.split(".")[:2]])
+        version_tuple = tuple(int(part) for part in gevent.__version__.split(".")[:2])
         if is_object_patched("threading", "local"):
             # Gevent 20.9.0 depends on Greenlet 0.4.17 which natively handles switching
             # context vars when greenlets are switched, so, Gevent 20.9.0+ is all fine.
@@ -800,15 +783,10 @@ def _is_contextvars_broken():
             # Gevent 20.5, that doesn't depend on Greenlet 0.4.17 with native support
             # for contextvars, is able to patch both thread locals and contextvars, in
             # that case, check if contextvars are effectively patched.
-            if (
-                # Gevent 20.9.0+
-                (sys.version_info >= (3, 7) and version_tuple >= (20, 9))
-                # Gevent 20.5.0+ or Python < 3.7
-                or (is_object_patched("contextvars", "ContextVar"))
-            ):
-                return False
+            return (
+                sys.version_info < (3, 7) or version_tuple < (20, 9)
+            ) and not (is_object_patched("contextvars", "ContextVar"))
 
-            return True
     except ImportError:
         pass
 
@@ -853,28 +831,18 @@ def _get_contextvars():
     See https://docs.sentry.io/platforms/python/contextvars/ for more information.
     """
     if not _is_contextvars_broken():
-        # aiocontextvars is a PyPI package that ensures that the contextvars
-        # backport (also a PyPI package) works with asyncio under Python 3.6
-        #
-        # Import it if available.
-        if sys.version_info < (3, 7):
             # `aiocontextvars` is absolutely required for functional
             # contextvars on Python 3.6.
-            try:
+        try:
+            if sys.version_info < (3, 7):
                 from aiocontextvars import ContextVar  # noqa
 
-                return True, ContextVar
-            except ImportError:
-                pass
-        else:
-            # On Python 3.7 contextvars are functional.
-            try:
+            else:
                 from contextvars import ContextVar
 
-                return True, ContextVar
-            except ImportError:
-                pass
-
+            return True, ContextVar
+        except ImportError:
+            pass
     # Fall back to basic thread-local usage.
 
     from threading import local
@@ -963,7 +931,7 @@ class TimeoutThread(threading.Thread):
 
         # Setting up the exact integer value of configured time(in seconds)
         if integer_configured_timeout < self.configured_timeout:
-            integer_configured_timeout = integer_configured_timeout + 1
+            integer_configured_timeout += 1
 
         # Raising Exception after timeout duration is reached
         raise ServerlessTimeoutWarning(

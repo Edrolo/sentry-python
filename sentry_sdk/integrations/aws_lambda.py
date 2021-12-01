@@ -360,11 +360,10 @@ def _make_request_event_processor(aws_event, aws_context, configured_timeout):
 
             if "body" in aws_event:
                 request["data"] = aws_event.get("body", "")
-        else:
-            if aws_event.get("body", None):
-                # Unfortunately couldn't find a way to get structured body from AWS
-                # event. Meaning every body is unstructured to us.
-                request["data"] = AnnotatedValue("", {"rem": [["!raw", "x", 0, 0]]})
+        elif aws_event.get("body", None):
+            # Unfortunately couldn't find a way to get structured body from AWS
+            # event. Meaning every body is unstructured to us.
+            request["data"] = AnnotatedValue("", {"rem": [["!raw", "x", 0, 0]]})
 
         sentry_event["request"] = request
 
@@ -402,7 +401,7 @@ def _get_cloudwatch_logs_url(aws_context, start_time):
     formatstring = "%Y-%m-%dT%H:%M:%SZ"
     region = environ.get("AWS_REGION", "")
 
-    url = (
+    return (
         "https://console.{domain}/cloudwatch/home?region={region}"
         "#logEventViewer:group={log_group};stream={log_stream}"
         ";start={start_time};end={end_time}"
@@ -414,5 +413,3 @@ def _get_cloudwatch_logs_url(aws_context, start_time):
         start_time=(start_time - timedelta(seconds=1)).strftime(formatstring),
         end_time=(datetime.utcnow() + timedelta(seconds=2)).strftime(formatstring),
     )
-
-    return url

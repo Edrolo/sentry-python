@@ -13,7 +13,6 @@ def simple_middleware(get_response):
     else:
 
         def middleware(request):
-            response = get_response(request)
-            return response
+            return get_response(request)
 
     return middleware

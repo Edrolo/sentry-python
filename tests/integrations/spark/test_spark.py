@@ -92,8 +92,7 @@ def test_sentry_listener_on_job_end(sentry_listener, job_result, level):
             return "sample-job-id-end"
 
         def jobResult(self):  # noqa: N802
-            result = MockJobResult()
-            return result
+            return MockJobResult()
 
     mock_job_end = MockJobEnd()
     listener.onJobEnd(mock_job_end)
@@ -118,8 +117,7 @@ def test_sentry_listener_on_stage_submitted(sentry_listener):
 
     class MockStageSubmitted:
         def stageInfo(self):  # noqa: N802
-            stageinf = StageInfo()
-            return stageinf
+            return StageInfo()
 
     mock_stage_submitted = MockStageSubmitted()
     listener.onStageSubmitted(mock_stage_submitted)

@@ -37,10 +37,7 @@ class ThreadingIntegration(Integration):
             hub = Hub.current
             integration = hub.get_integration(ThreadingIntegration)
             if integration is not None:
-                if not integration.propagate_hub:
-                    hub_ = None
-                else:
-                    hub_ = Hub(hub)
+                hub_ = None if not integration.propagate_hub else Hub(hub)
                 # Patching instance methods in `start()` creates a reference cycle if
                 # done in a naive way. See
                 # https://github.com/getsentry/sentry-python/pull/434

@@ -95,27 +95,26 @@ def _wrap_apply_async(f):
         # type: (*Any, **Any) -> Any
         hub = Hub.current
         integration = hub.get_integration(CeleryIntegration)
-        if integration is not None and integration.propagate_traces:
-            with hub.start_span(op="celery.submit", description=args[0].name) as span:
-                with capture_internal_exceptions():
-                    headers = dict(hub.iter_trace_propagation_headers(span))
+        if integration is None or not integration.propagate_traces:
+            return f(*args, **kwargs)
+        with hub.start_span(op="celery.submit", description=args[0].name) as span:
+            with capture_internal_exceptions():
+                headers = dict(hub.iter_trace_propagation_headers(span))
 
-                    if headers:
-                        # Note: kwargs can contain headers=None, so no setdefault!
-                        # Unsure which backend though.
-                        kwarg_headers = kwargs.get("headers") or {}
-                        kwarg_headers.update(headers)
+                if headers:
+                    # Note: kwargs can contain headers=None, so no setdefault!
+                    # Unsure which backend though.
+                    kwarg_headers = kwargs.get("headers") or {}
+                    kwarg_headers.update(headers)
 
-                        # https://github.com/celery/celery/issues/4875
-                        #
-                        # Need to setdefault the inner headers too since other
-                        # tracing tools (dd-trace-py) also employ this exact
-                        # workaround and we don't want to break them.
-                        kwarg_headers.setdefault("headers", {}).update(headers)
-                        kwargs["headers"] = kwarg_headers
+                    # https://github.com/celery/celery/issues/4875
+                    #
+                    # Need to setdefault the inner headers too since other
+                    # tracing tools (dd-trace-py) also employ this exact
+                    # workaround and we don't want to break them.
+                    kwarg_headers.setdefault("headers", {}).update(headers)
+                    kwargs["headers"] = kwarg_headers
 
-                return f(*args, **kwargs)
-        else:
             return f(*args, **kwargs)
 
     return apply_async  # type: ignore

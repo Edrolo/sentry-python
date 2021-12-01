@@ -100,10 +100,7 @@ class LoggingIntegration(Integration):
 def _can_record(record):
     # type: (LogRecord) -> bool
     """Prevents ignored loggers from recording"""
-    for logger in _IGNORED_LOGGERS:
-        if fnmatch(record.name, logger):
-            return False
-    return True
+    return not any(fnmatch(record.name, logger) for logger in _IGNORED_LOGGERS)
 
 
 def _breadcrumb_from_record(record):
@@ -199,7 +196,7 @@ class EventHandler(logging.Handler, object):
                 client_options=client_options,
                 mechanism={"type": "logging", "handled": True},
             )
-        elif record.exc_info and record.exc_info[0] is None:
+        elif record.exc_info:
             event = {}
             hint = {}
             with capture_internal_exceptions():

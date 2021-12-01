@@ -214,17 +214,13 @@ class _Client(object):
         type_name = get_type_name(exc_info[0])
         full_name = "%s.%s" % (exc_info[0].__module__, type_name)
 
-        for errcls in self.options["ignore_errors"]:
-            # String types are matched against the type name in the
-            # exception only
-            if isinstance(errcls, string_types):
-                if errcls == full_name or errcls == type_name:
-                    return True
-            else:
-                if issubclass(exc_info[0], errcls):
-                    return True
-
-        return False
+        return any(
+            isinstance(errcls, string_types)
+            and errcls in [full_name, type_name]
+            or not isinstance(errcls, string_types)
+            and issubclass(exc_info[0], errcls)
+            for errcls in self.options["ignore_errors"]
+        )
 
     def _should_capture(
         self,
@@ -249,10 +245,7 @@ class _Client(object):
                 self.transport.record_lost_event("sample_rate", data_category="error")
             return False
 
-        if self._is_ignored_error(event, hint):
-            return False
-
-        return True
+        return not self._is_ignored_error(event, hint)
 
     def _update_session_from_event(
         self,

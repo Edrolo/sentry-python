@@ -92,9 +92,11 @@ def setup_integrations(
     `with_defaults` is set to `True` then all default integrations are added
     unless they were already provided before.
     """
-    integrations = dict(
-        (integration.identifier, integration) for integration in integrations or ()
-    )
+    integrations = {
+        integration.identifier: integration
+        for integration in integrations or ()
+    }
+
 
     logger.debug("Setting up integrations (with default = %s)", with_defaults)
 
@@ -119,15 +121,14 @@ def setup_integrations(
                 try:
                     type(integration).setup_once()
                 except NotImplementedError:
-                    if getattr(integration, "install", None) is not None:
-                        logger.warning(
-                            "Integration %s: The install method is "
-                            "deprecated. Use `setup_once`.",
-                            identifier,
-                        )
-                        integration.install()
-                    else:
+                    if getattr(integration, "install", None) is None:
                         raise
+                    logger.warning(
+                        "Integration %s: The install method is "
+                        "deprecated. Use `setup_once`.",
+                        identifier,
+                    )
+                    integration.install()
                 except DidNotEnable as e:
                     if identifier not in used_as_default_integration:
                         raise

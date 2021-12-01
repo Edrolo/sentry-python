@@ -37,10 +37,7 @@ class Attachment(object):
         """Returns an envelope item for this attachment."""
         payload = None  # type: Union[None, PayloadRef, bytes]
         if self.bytes is not None:
-            if callable(self.bytes):
-                payload = self.bytes()
-            else:
-                payload = self.bytes
+            payload = self.bytes() if callable(self.bytes) else self.bytes
         else:
             payload = PayloadRef(path=self.path)
         return Item(

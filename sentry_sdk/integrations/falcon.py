@@ -143,11 +143,7 @@ def _patch_handle_exception():
         # NOTE(jmagnusson): falcon 2.0 changed falcon.API._handle_exception
         # method signature from `(ex, req, resp, params)` to
         # `(req, resp, ex, params)`
-        if isinstance(args[0], Exception):
-            ex = args[0]
-        else:
-            ex = args[2]
-
+        ex = args[0] if isinstance(args[0], Exception) else args[2]
         was_handled = original_handle_exception(self, *args)
 
         hub = Hub.current
