@@ -90,11 +90,9 @@ def test_continue_from_headers(sentry_init, capture_events, sampled, sample_rate
     if sampled is False or (sample_rate == 0 and sampled is None):
         trace1, message = events
 
-        assert trace1["transaction"] == "hi"
     else:
         trace1, message, trace2 = events
 
-        assert trace1["transaction"] == "hi"
         assert trace2["transaction"] == "ho"
 
         assert (
@@ -104,6 +102,7 @@ def test_continue_from_headers(sentry_init, capture_events, sampled, sample_rate
             == message["contexts"]["trace"]["trace_id"]
         )
 
+    assert trace1["transaction"] == "hi"
     assert message["message"] == "hello"
 
 

@@ -77,7 +77,7 @@ def test_basic(tornado_testcase, sentry_init, capture_events):
 
     request = event["request"]
     host = request["headers"]["Host"]
-    assert event["request"] == {
+    assert request == {
         "env": {"REMOTE_ADDR": "127.0.0.1"},
         "headers": {
             "Accept-Encoding": "gzip",
@@ -90,7 +90,6 @@ def test_basic(tornado_testcase, sentry_init, capture_events):
         "query_string": "foo=bar",
         "url": "http://{host}/hi".format(host=host),
     }
-
     assert event["tags"] == {"foo": "42"}
     assert (
         event["transaction"]
@@ -152,7 +151,7 @@ def test_transactions(tornado_testcase, sentry_init, capture_events, handler, co
 
     request = server_tx["request"]
     host = request["headers"]["Host"]
-    assert server_tx["request"] == {
+    assert request == {
         "env": {"REMOTE_ADDR": "127.0.0.1"},
         "headers": {
             "Accept-Encoding": "gzip",
@@ -164,7 +163,6 @@ def test_transactions(tornado_testcase, sentry_init, capture_events, handler, co
         "data": {"heyoo": [""]},
         "url": "http://{host}/hi".format(host=host),
     }
-
     assert (
         client_tx["contexts"]["trace"]["trace_id"]
         == server_tx["contexts"]["trace"]["trace_id"]

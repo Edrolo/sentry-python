@@ -77,9 +77,7 @@ def _wrap_func(func):
                     # Starting the thread to raise timeout warning exception
                     timeout_thread.start()
 
-            headers = {}
-            if hasattr(gcp_event, "headers"):
-                headers = gcp_event.headers
+            headers = gcp_event.headers if hasattr(gcp_event, "headers") else {}
             transaction = Transaction.continue_from_headers(
                 headers, op="serverless.function", name=environ.get("FUNCTION_NAME", "")
             )
@@ -183,11 +181,10 @@ def _make_request_event_processor(gcp_event, configured_timeout, initial_time):
         if _should_send_default_pii():
             if hasattr(gcp_event, "data"):
                 request["data"] = gcp_event.data
-        else:
-            if hasattr(gcp_event, "data"):
-                # Unfortunately couldn't find a way to get structured body from GCP
-                # event. Meaning every body is unstructured to us.
-                request["data"] = AnnotatedValue("", {"rem": [["!raw", "x", 0, 0]]})
+        elif hasattr(gcp_event, "data"):
+            # Unfortunately couldn't find a way to get structured body from GCP
+            # event. Meaning every body is unstructured to us.
+            request["data"] = AnnotatedValue("", {"rem": [["!raw", "x", 0, 0]]})
 
         event["request"] = request
 
@@ -208,7 +205,7 @@ def _get_google_cloud_logs_url(final_time):
     hour_ago = final_time - timedelta(hours=1)
     formatstring = "%Y-%m-%dT%H:%M:%SZ"
 
-    url = (
+    return (
         "https://console.cloud.google.com/logs/viewer?project={project}&resource=cloud_function"
         "%2Ffunction_name%2F{function_name}%2Fregion%2F{region}&minLogLevel=0&expandAll=false"
         "&timestamp={timestamp_end}&customFacets=&limitCustomFacetWidth=true"
@@ -221,5 +218,3 @@ def _get_google_cloud_logs_url(final_time):
         timestamp_end=final_time.strftime(formatstring),
         timestamp_start=hour_ago.strftime(formatstring),
     )
-
-    return url

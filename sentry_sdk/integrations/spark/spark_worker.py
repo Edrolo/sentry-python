@@ -44,16 +44,14 @@ def _capture_exception(exc_info, hub):
     exc_info = exc_info_from_error(exc_info)
 
     exc_type, exc_value, tb = exc_info
-    rv = []
+    rv = [
+        single_exception_from_error_tuple(
+            exc_type, exc_value, tb, client_options, mechanism
+        )
+        for exc_type, exc_value, tb in walk_exception_chain(exc_info)
+        if exc_type not in (SystemExit, EOFError, ConnectionResetError)
+    ]
 
-    # On Exception worker will call sys.exit(-1), so we can ignore SystemExit and similar errors
-    for exc_type, exc_value, tb in walk_exception_chain(exc_info):
-        if exc_type not in (SystemExit, EOFError, ConnectionResetError):
-            rv.append(
-                single_exception_from_error_tuple(
-                    exc_type, exc_value, tb, client_options, mechanism
-                )
-            )
 
     if rv:
         rv.reverse()

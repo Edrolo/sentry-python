@@ -36,10 +36,7 @@ class Envelope(object):
         if headers is not None:
             headers = dict(headers)
         self.headers = headers or {}
-        if items is None:
-            items = []
-        else:
-            items = list(items)
+        items = [] if items is None else list(items)
         self.items = items
 
     @property
@@ -196,10 +193,7 @@ class Item(object):
         content_type=None,  # type: Optional[str]
         filename=None,  # type: Optional[str]
     ):
-        if headers is not None:
-            headers = dict(headers)
-        elif headers is None:
-            headers = {}
+        headers = dict(headers) if headers is not None else {}
         self.headers = headers
         if isinstance(payload, bytes):
             payload = PayloadRef(bytes=payload)

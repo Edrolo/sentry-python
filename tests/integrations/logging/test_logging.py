@@ -43,9 +43,10 @@ def test_logging_defaults(integrations, sentry_init, capture_events, kwargs):
 
     assert event["level"] == "fatal"
     assert any(crumb["message"] == "bread" for crumb in event["breadcrumbs"]["values"])
-    assert not any(
-        crumb["message"] == "LOL" for crumb in event["breadcrumbs"]["values"]
+    assert all(
+        crumb["message"] != "LOL" for crumb in event["breadcrumbs"]["values"]
     )
+
     assert "threads" not in event
 
 

@@ -104,8 +104,7 @@ def _init(*args, **kwargs):
     """
     client = Client(*args, **kwargs)  # type: ignore
     Hub.current.bind_client(client)
-    rv = _InitGuard(client)
-    return rv
+    return _InitGuard(client)
 
 
 from sentry_sdk._types import MYPY
@@ -362,11 +361,7 @@ class Hub(with_metaclass(HubMeta)):  # type: ignore
         client = self.client
         if client is None:
             return None
-        if error is not None:
-            exc_info = exc_info_from_error(error)
-        else:
-            exc_info = sys.exc_info()
-
+        exc_info = exc_info_from_error(error) if error is not None else sys.exc_info()
         event, hint = event_from_exception(exc_info, client_options=client.options)
         try:
             return self.capture_event(event, hint=hint, scope=scope, **scope_args)
@@ -458,13 +453,13 @@ class Hub(with_metaclass(HubMeta)):  # type: ignore
                 "Deprecated: use start_transaction to start transactions and "
                 "Transaction.start_child to start spans."
             )
-            if isinstance(span, Transaction):
-                logger.warning(deprecation_msg)
-                return self.start_transaction(span)
-            if "transaction" in kwargs:
-                logger.warning(deprecation_msg)
-                name = kwargs.pop("transaction")
-                return self.start_transaction(name=name, **kwargs)
+        if isinstance(span, Transaction):
+            logger.warning(deprecation_msg)
+            return self.start_transaction(span)
+        if "transaction" in kwargs:
+            logger.warning(deprecation_msg)
+            name = kwargs.pop("transaction")
+            return self.start_transaction(name=name, **kwargs)
 
         if span is not None:
             return span
@@ -700,8 +695,7 @@ class Hub(with_metaclass(HubMeta)):  # type: ignore
         if not propagate_traces:
             return
 
-        for header in span.iter_headers():
-            yield header
+        yield from span.iter_headers()
 
 
 GLOBAL_HUB = Hub()

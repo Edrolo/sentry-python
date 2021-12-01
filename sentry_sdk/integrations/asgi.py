@@ -88,10 +88,7 @@ class SentryAsgiMiddleware:
             )
         self.app = app
 
-        if _looks_like_asgi3(app):
-            self.__call__ = self._run_asgi3  # type: Callable[..., Any]
-        else:
-            self.__call__ = self._run_asgi2
+        self.__call__ = self._run_asgi3 if _looks_like_asgi3(app) else self._run_asgi2
 
     def _run_asgi2(self, scope):
         # type: (Any) -> Any
@@ -252,8 +249,5 @@ class SentryAsgiMiddleware:
         for raw_key, raw_value in scope["headers"]:
             key = raw_key.decode("latin-1")
             value = raw_value.decode("latin-1")
-            if key in headers:
-                headers[key] = headers[key] + ", " + value
-            else:
-                headers[key] = value
+            headers[key] = headers[key] + ", " + value if key in headers else value
         return headers

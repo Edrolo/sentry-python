@@ -43,12 +43,10 @@ def get_template_frame_from_exception(exc_value):
 
 
 def _get_template_name_description(template_name):
-    # type: (str) -> str
-    if isinstance(template_name, (list, tuple)):
-        if template_name:
-            return "[{}, ...]".format(template_name[0])
-    else:
+    if not isinstance(template_name, (list, tuple)):
         return template_name
+    if template_name:
+        return "[{}, ...]".format(template_name[0])
 
 
 def patch_templates():

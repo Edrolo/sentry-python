@@ -199,7 +199,7 @@ def _get_headers(environ):
             "HTTP_CONTENT_LENGTH",
         ):
             yield key[5:].replace("_", "-").title(), value
-        elif key in ("CONTENT_TYPE", "CONTENT_LENGTH"):
+        elif key in {"CONTENT_TYPE", "CONTENT_LENGTH"}:
             yield key.replace("_", "-").title(), value
 
 

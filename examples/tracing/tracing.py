@@ -60,9 +60,8 @@ def wait(redis_key):
     result = redis_conn.get(redis_key)
     if result is None:
         return "NONE"
-    else:
-        redis_conn.delete(redis_key)
-        return "RESULT: {}".format(result)
+    redis_conn.delete(redis_key)
+    return "RESULT: {}".format(result)
 
 
 @app.cli.command("worker")

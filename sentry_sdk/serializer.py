@@ -99,9 +99,8 @@ class Memo(object):
         obj = self._objs[-1]
         if id(obj) in self._ids:
             return True
-        else:
-            self._ids[id(obj)] = obj
-            return False
+        self._ids[id(obj)] = obj
+        return False
 
     def __exit__(
         self,
